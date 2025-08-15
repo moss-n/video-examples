@@ -36,9 +36,9 @@ case "$1" in
     "tail")
         echo -e "${BLUE}Switching to${NC} tail sampling configuration..."
         
-        # Restart the services with tail sampling config type
-        CONFIG_TYPE=with docker compose down
-        CONFIG_TYPE=with docker compose up -d
+        # Only restart the collector service to preserve Jaeger trace data
+        CONFIG_TYPE=with docker compose stop otel-collector order-service
+        CONFIG_TYPE=with docker compose up -d otel-collector order-service
         
         # Set the environment variable for the current session
         export CONFIG_TYPE=with
@@ -50,9 +50,9 @@ case "$1" in
     "no-tail")
         echo -e "${BLUE}Switching to${NC} no tail sampling configuration..."
         
-        # Restart the services with no-tail config type
-        CONFIG_TYPE=no docker compose down
-        CONFIG_TYPE=no docker compose up -d
+        # Only restart the collector service to preserve Jaeger trace data
+        CONFIG_TYPE=no docker compose stop otel-collector order-service
+        CONFIG_TYPE=no docker compose up -d otel-collector order-service
         
         # Set the environment variable for the current session
         export CONFIG_TYPE=no
