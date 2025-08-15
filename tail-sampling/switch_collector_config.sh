@@ -21,96 +21,42 @@ fi
 
 # Function to display status
 show_status() {
-    if [ -L "otel-collector-config.yaml" ]; then
-        current=$(readlink otel-collector-config.yaml)
-        if [[ "$current" == *"no-sampling"* ]]; then
-            echo -e "${BLUE}Current configuration:${NC} No tail sampling"
-        else
+    if [ -n "$CONFIG_TYPE" ]; then
+        if [[ "$CONFIG_TYPE" == "with" ]]; then
             echo -e "${BLUE}Current configuration:${NC} With tail sampling"
+        else
+            echo -e "${BLUE}Current configuration:${NC} No tail sampling"
         fi
     else
-        echo -e "${YELLOW}Warning:${NC} otel-collector-config.yaml is not a symlink"
+        echo -e "${YELLOW}Warning:${NC} CONFIG_TYPE not set, defaulting to no-tail sampling"
     fi
 }
 
 case "$1" in
     "tail")
         echo -e "${BLUE}Switching to${NC} tail sampling configuration..."
-        if [ -f "otel-collector-config-with-sampling.yaml" ]; then
-            # Save the original file if it's not a symlink
-            if [ ! -L "otel-collector-config.yaml" ]; then
-                cp otel-collector-config.yaml otel-collector-config-with-sampling.yaml
-            fi
-            
-            # Remove existing symlink or file
-            rm -f otel-collector-config.yaml
-            
-            # Create symlink
-            ln -sf otel-collector-config-with-sampling.yaml otel-collector-config.yaml
-            
-            # Restart collector
-            echo "Restarting collector..."
-            docker compose restart otel-collector
-            
-            # Clear Jaeger data
-            echo "Clearing existing traces from Jaeger..."
-            docker compose restart jaeger
-            
-            # Restart the order-service container with tail sampling config type
-            echo "Ensuring order-service is running with CONFIG_TYPE=tail..."
-            CONFIG_TYPE=tail docker compose up -d order-service
-
-            echo -e "${GREEN}Successfully switched to tail sampling configuration!${NC}"
-            echo "Wait a moment for services to fully restart..."
-        else
-            echo "Creating tail sampling config from existing config..."
-            cp otel-collector-config.yaml otel-collector-config-with-sampling.yaml
-            
-            # Now switch to the new file
-            rm -f otel-collector-config.yaml
-            ln -sf otel-collector-config-with-sampling.yaml otel-collector-config.yaml
-            
-            # Restart collector
-            echo "Restarting collector..."
-            docker compose restart otel-collector
-            
-            # Clear Jaeger data
-            echo "Clearing existing traces from Jaeger..."
-            docker compose restart jaeger
-            
-            # Restart the order-service container with tail sampling config type
-            echo "Ensuring order-service is running with CONFIG_TYPE=tail..."
-            CONFIG_TYPE=tail docker compose up -d order-service
-            
-            echo -e "${GREEN}Created and switched to tail sampling configuration!${NC}"
-        fi
+        
+        # Restart the services with tail sampling config type
+        CONFIG_TYPE=with docker compose down
+        CONFIG_TYPE=with docker compose up -d
+        
+        # Set the environment variable for the current session
+        export CONFIG_TYPE=with
+        
+        echo -e "${GREEN}Successfully switched to tail sampling configuration!${NC}"
+        echo "Wait a moment for services to fully restart..."
         ;;
         
     "no-tail")
         echo -e "${BLUE}Switching to${NC} no tail sampling configuration..."
-        if [ ! -f "otel-collector-config-no-sampling.yaml" ]; then
-            echo "Error: otel-collector-config-no-sampling.yaml not found"
-            exit 1
-        fi
         
-        # Remove existing symlink or file
-        rm -f otel-collector-config.yaml
+        # Restart the services with no-tail config type
+        CONFIG_TYPE=no docker compose down
+        CONFIG_TYPE=no docker compose up -d
         
-        # Create symlink
-        ln -sf otel-collector-config-no-sampling.yaml otel-collector-config.yaml
+        # Set the environment variable for the current session
+        export CONFIG_TYPE=no
         
-        # Restart collector
-        echo "Restarting collector..."
-        docker compose restart otel-collector
-        
-        # Clear Jaeger data
-        echo "Clearing existing traces from Jaeger..."
-        docker compose restart jaeger
-        
-        # Restart the order-service container with no-tail config type
-        echo "Ensuring order-service is running with CONFIG_TYPE=no-tail..."
-        CONFIG_TYPE=no-tail docker compose up -d order-service
-
         echo -e "${GREEN}Successfully switched to no tail sampling configuration!${NC}"
         echo "Wait a moment for services to fully restart..."
         ;;
