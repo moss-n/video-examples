@@ -1,0 +1,74 @@
+receivers:
+  # Receive data from the application
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  # Export sampled traces to Jaeger
+  otlp:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  # Debug exporter for console output (replaced deprecated logging exporter)
+  debug:
+    verbosity: detailed
+
+processors:
+  batch:
+    # Increase timeout and size to handle more spans before export
+    timeout: 10s
+    send_batch_size: 8192
+    send_batch_max_size: 0
+  
+  # This is the key component for tail sampling
+  tail_sampling:
+    # How long the collector waits for spans to arrive before making a decision
+    decision_wait: 10s
+    # Number of traces to keep in memory
+    num_traces: 50000
+    # Define the sampling policies
+    policies:
+      [
+        # Rule 1: Always sample traces with error status
+        {
+          name: "error-sampling",
+          type: "status_code",
+          status_code: {status_codes: ["ERROR"]}
+        },
+        # Rule 2: Always sample traces with high latency (>1.5s)
+        {
+          name: "latency-sampling",
+          type: "latency",
+          latency: {threshold_ms: 1500}
+        },
+        # Rule 3: Always sample traces with error attribute
+        {
+          name: "error-attribute-sampling",
+          type: "string_attribute",
+          string_attribute: {key: "error", values: ["true"]}
+        },
+        # Rule 4: Sample 10% of remaining traces (baseline)
+        {
+          name: "probabilistic-sampling",
+          type: "probabilistic",
+          probabilistic: {sampling_percentage: 10}
+        }
+      ]
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+service:
+  extensions: [health_check, pprof]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, tail_sampling]
+      exporters: [otlp, debug]
