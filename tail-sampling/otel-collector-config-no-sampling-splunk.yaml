@@ -1,0 +1,51 @@
+receivers:
+  # Receive data from the application
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  # Export sampled traces to Jaeger
+  otlp:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  # Debug exporter for console output
+  debug:
+    verbosity: detailed
+  # Splunk exporter (added but not activated in pipeline)
+  splunk_hec:
+    token: "${SPLUNK_ACCESS_TOKEN}"
+    endpoint: "https://ingest.${SPLUNK_REALM}.signalfx.com/v2/trace"
+    source: "otel-tail-sampling-demo"
+    sourcetype: "otel-trace"
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 8192
+    send_batch_max_size: 0
+    
+  # No tail sampling processor for this config
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+service:
+  extensions: [health_check, pprof]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp, debug]
+    # Splunk pipeline is commented out - uncomment to activate
+    # traces/splunk:
+    #   receivers: [otlp]
+    #   processors: [batch]
+    #   exporters: [splunk_hec, debug]
