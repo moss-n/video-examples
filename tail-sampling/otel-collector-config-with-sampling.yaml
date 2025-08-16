@@ -45,11 +45,11 @@ processors:
           type: "latency",
           latency: {threshold_ms: 1500}
         },
-        # Rule 3: Always sample traces with error attribute
+        # Rule 3: Always sample traces with issue_detected attribute
         {
-          name: "error-attribute-sampling",
+          name: "issue-attribute-sampling",
           type: "string_attribute",
-          string_attribute: {key: "error", values: ["true"]}
+          string_attribute: {key: "issue_detected", values: ["true"]}
         },
         # Rule 4: Sample 10% of remaining traces (baseline)
         {
