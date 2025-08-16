@@ -20,17 +20,14 @@ This document explains how to use Splunk Observability Cloud with the tail sampl
    cp .env.example .env
    ```
 
-2. Make sure the switching script is executable:
-   ```
-   chmod +x switch_to_splunk.sh
-   ```
-
 ## Usage
+
+The existing `switch_collector_config.sh` script has been enhanced to support Splunk integration:
 
 ### Switch to Tail Sampling with Splunk
 
 ```bash
-./switch_to_splunk.sh tail
+./switch_collector_config.sh splunk-tail
 ```
 
 This will:
@@ -42,7 +39,7 @@ This will:
 ### Switch to No Tail Sampling with Splunk
 
 ```bash
-./switch_to_splunk.sh no-tail
+./switch_collector_config.sh splunk-no-tail
 ```
 
 This will do the same but with tail sampling disabled.
@@ -50,10 +47,10 @@ This will do the same but with tail sampling disabled.
 ### Check Current Status
 
 ```bash
-./switch_to_splunk.sh status
+./switch_collector_config.sh status
 ```
 
-This shows the current configuration.
+This shows the current configuration, including whether Splunk export is enabled.
 
 ## Generate Test Load
 
@@ -82,8 +79,9 @@ http://localhost:16686
 
 This integration:
 - Uses the same Docker services as the original demo
-- Adds Splunk exporters to the OpenTelemetry collector configurations
-- Allows you to switch between tail sampling and no tail sampling modes
+- Directly integrates Splunk exporters into the existing OpenTelemetry collector configurations
+- Uses environment variable substitution to conditionally enable Splunk pipelines
+- Allows you to switch between tail sampling and no tail sampling modes with or without Splunk
 - Preserves trace data in Jaeger while also sending to Splunk
 - Demonstrates the effects of tail sampling in both backends
 
@@ -95,4 +93,21 @@ To revert to the Jaeger-only setup (without Splunk export):
 ./switch_collector_config.sh tail
 # or
 ./switch_collector_config.sh no-tail
+```
+
+## Using Splunk Distribution of OpenTelemetry Collector
+
+For production deployments, consider using the Splunk Distribution of OpenTelemetry Collector. This provides:
+
+1. Better default configurations for Splunk
+2. Additional processors and exporters specific to Splunk
+3. Enterprise support from Splunk
+4. Regular security updates
+
+To use the Splunk distribution, change the collector image in `docker-compose.yaml`:
+
+```yaml
+otel-collector:
+  image: quay.io/signalfx/splunk-otel-collector:latest
+  # Rest of the configuration remains the same
 ```
