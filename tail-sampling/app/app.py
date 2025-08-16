@@ -81,7 +81,11 @@ def checkout():
         scenario = "error"
         logger.error(f"Order {order_id}: Failed to process!")
         current_span.set_attribute("scenario", "error")
-        current_span.set_attribute("error", True)
+        current_span.set_attribute("error", True)  # Keep for backward compatibility with Rule 3
+        
+        # Set standard OpenTelemetry error status
+        current_span.set_status(trace.StatusCode.ERROR, "Checkout failed: Inventory unavailable")
+        
         # Errors can be fast or slow
         time.sleep(0.1 + random.random() * 0.5)
         return {"order_id": order_id, "status": "failed", "message": "Checkout failed: Inventory unavailable"}, 500
