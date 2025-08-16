@@ -16,7 +16,7 @@ exporters:
   # Debug exporter for console output
   debug:
     verbosity: detailed
-  # Splunk exporter (added but not activated in pipeline)
+  # Splunk exporter
   splunk_hec:
     token: "${SPLUNK_ACCESS_TOKEN}"
     endpoint: "https://ingest.${SPLUNK_REALM}.signalfx.com/v2/trace"
@@ -78,8 +78,7 @@ service:
       receivers: [otlp]
       processors: [batch, tail_sampling]
       exporters: [otlp, debug]
-    # Splunk pipeline is commented out - uncomment to activate
-    # traces/splunk:
-    #   receivers: [otlp]
-    #   processors: [batch, tail_sampling]
-    #   exporters: [splunk_hec, debug]
+    traces/splunk:
+      receivers: [otlp]
+      processors: [batch, tail_sampling]
+      exporters: [splunk_hec, debug]

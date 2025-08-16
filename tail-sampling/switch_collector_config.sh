@@ -8,9 +8,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Default Splunk pipeline settings (disabled)
-SPLUNK_PIPELINE="# "  # Comment prefix to disable the Splunk pipeline
-export SPLUNK_PIPELINE
+# Variables to track current state
+CURRENT_CONFIG="with"
+SPLUNK_ENABLED="false"
 
 # Default to help if no arguments provided
 if [ $# -eq 0 ]; then
@@ -48,24 +48,19 @@ check_splunk_env() {
 
 # Function to display status
 show_status() {
-    if [ -n "$CONFIG_TYPE" ]; then
-        if [[ "$CONFIG_TYPE" == "with" ]]; then
-            echo -e "${BLUE}Current configuration:${NC} With tail sampling"
-        else
-            echo -e "${BLUE}Current configuration:${NC} No tail sampling"
-        fi
-        
-        # Check if Splunk integration is enabled
-        if [ -z "$SPLUNK_PIPELINE" ] || [ "$SPLUNK_PIPELINE" != "# " ]; then
-            echo -e "${GREEN}Splunk export:${NC} Enabled"
-            if [ -n "$SPLUNK_REALM" ]; then
-                echo -e "${GREEN}Splunk realm:${NC} $SPLUNK_REALM"
-            fi
-        else
-            echo -e "${GREEN}Splunk export:${NC} Disabled"
+    if [[ "$CURRENT_CONFIG" == "with" ]]; then
+        echo -e "${BLUE}Current configuration:${NC} With tail sampling"
+    else
+        echo -e "${BLUE}Current configuration:${NC} No tail sampling"
+    fi
+    
+    if [[ "$SPLUNK_ENABLED" == "true" ]]; then
+        echo -e "${GREEN}Splunk export:${NC} Enabled"
+        if [ -n "$SPLUNK_REALM" ]; then
+            echo -e "${GREEN}Splunk realm:${NC} $SPLUNK_REALM"
         fi
     else
-        echo -e "${YELLOW}Warning:${NC} CONFIG_TYPE not set, defaulting to no-tail sampling"
+        echo -e "${GREEN}Splunk export:${NC} Disabled"
     fi
 }
 
@@ -73,15 +68,16 @@ case "$1" in
     "tail")
         echo -e "${BLUE}Switching to${NC} tail sampling configuration..."
         
-        # Disable Splunk pipeline
-        export SPLUNK_PIPELINE="# "
+        # Set collector config file
+        export CONFIG_TYPE=with
+        SPLUNK_ENABLED="false"
         
         # Only restart the collector service to preserve Jaeger trace data
-        CONFIG_TYPE=with docker compose stop otel-collector order-service
-        CONFIG_TYPE=with docker compose up -d otel-collector order-service
+        docker compose stop otel-collector order-service
+        docker compose up -d otel-collector order-service
         
-        # Set the environment variable for the current session
-        export CONFIG_TYPE=with
+        # Set current state
+        CURRENT_CONFIG="with"
         
         echo -e "${GREEN}Successfully switched to tail sampling configuration!${NC}"
         echo "Wait a moment for services to fully restart..."
@@ -90,15 +86,16 @@ case "$1" in
     "no-tail")
         echo -e "${BLUE}Switching to${NC} no tail sampling configuration..."
         
-        # Disable Splunk pipeline
-        export SPLUNK_PIPELINE="# "
+        # Set collector config file
+        export CONFIG_TYPE=no
+        SPLUNK_ENABLED="false"
         
         # Only restart the collector service to preserve Jaeger trace data
-        CONFIG_TYPE=no docker compose stop otel-collector order-service
-        CONFIG_TYPE=no docker compose up -d otel-collector order-service
+        docker compose stop otel-collector order-service
+        docker compose up -d otel-collector order-service
         
-        # Set the environment variable for the current session
-        export CONFIG_TYPE=no
+        # Set current state
+        CURRENT_CONFIG="no"
         
         echo -e "${GREEN}Successfully switched to no tail sampling configuration!${NC}"
         echo "Wait a moment for services to fully restart..."
@@ -110,18 +107,20 @@ case "$1" in
         # Check Splunk credentials
         check_splunk_env
         
-        # Enable Splunk pipeline
-        export SPLUNK_PIPELINE=""
+        # Set config file to use Splunk version
+        cp otel-collector-config-with-sampling-splunk.yaml otel-collector-config-with-sampling.yaml
         
         # Only restart the collector service to preserve Jaeger trace data
-        CONFIG_TYPE=with SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN SPLUNK_REALM=$SPLUNK_REALM \
-        docker compose stop otel-collector order-service
+        export CONFIG_TYPE=with
+        export SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN
+        export SPLUNK_REALM=$SPLUNK_REALM
         
-        CONFIG_TYPE=with SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN SPLUNK_REALM=$SPLUNK_REALM \
+        docker compose stop otel-collector order-service
         docker compose up -d otel-collector order-service
         
-        # Set the environment variable for the current session
-        export CONFIG_TYPE=with
+        # Set current state
+        CURRENT_CONFIG="with"
+        SPLUNK_ENABLED="true"
         
         echo -e "${GREEN}Successfully switched to tail sampling with Splunk export!${NC}"
         echo "Wait a moment for services to fully restart..."
@@ -133,18 +132,20 @@ case "$1" in
         # Check Splunk credentials
         check_splunk_env
         
-        # Enable Splunk pipeline
-        export SPLUNK_PIPELINE=""
+        # Set config file to use Splunk version
+        cp otel-collector-config-no-sampling-splunk.yaml otel-collector-config-no-sampling.yaml
         
         # Only restart the collector service to preserve Jaeger trace data
-        CONFIG_TYPE=no SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN SPLUNK_REALM=$SPLUNK_REALM \
-        docker compose stop otel-collector order-service
+        export CONFIG_TYPE=no
+        export SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN
+        export SPLUNK_REALM=$SPLUNK_REALM
         
-        CONFIG_TYPE=no SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN SPLUNK_REALM=$SPLUNK_REALM \
+        docker compose stop otel-collector order-service
         docker compose up -d otel-collector order-service
         
-        # Set the environment variable for the current session
-        export CONFIG_TYPE=no
+        # Set current state
+        CURRENT_CONFIG="no"
+        SPLUNK_ENABLED="true"
         
         echo -e "${GREEN}Successfully switched to no tail sampling with Splunk export!${NC}"
         echo "Wait a moment for services to fully restart..."
@@ -161,19 +162,21 @@ case "$1" in
         ;;
 esac
 
-# Final status
+# No backup functionality needed
+
+# Show status if this isn't just a status request
 if [ "$1" != "status" ]; then
     echo
     show_status
+
+    echo
+    echo -e "${YELLOW}Next steps:${NC}"
+    echo "1. Run './generate_load.sh' to generate traces"
+    echo "2. Visit Jaeger UI to see results: http://localhost:16686"
 fi
 
-echo
-echo -e "${YELLOW}Next steps:${NC}"
-echo "1. Run './generate_load.sh' to generate traces"
-echo "2. Visit Jaeger UI to see results: http://localhost:16686"
-
 # If Splunk is enabled, add Splunk-specific information
-if [ -z "$SPLUNK_PIPELINE" ] || [ "$SPLUNK_PIPELINE" != "# " ]; then
+if grep -q "^    traces/splunk:" "otel-collector-config-${CONFIG_TYPE}-sampling.yaml" 2>/dev/null; then
     echo "3. View traces in Splunk Observability Cloud:"
     echo "   - Log in to your Splunk account"
     echo "   - Navigate to APM > Traces"

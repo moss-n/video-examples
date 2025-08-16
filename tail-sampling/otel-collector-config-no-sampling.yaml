@@ -7,14 +7,12 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 processors:
-  # Add memory limiter to prevent OOM
   memory_limiter:
     check_interval: 1s
     limit_percentage: 80
     spike_limit_percentage: 25
   
   batch:
-    # Setting timeout back to 1s to test our theory
     timeout: 1s
     send_batch_size: 8192
     send_batch_max_size: 0
@@ -26,12 +24,6 @@ exporters:
       insecure: true
   debug:
     verbosity: detailed
-  # Splunk exporter - enabled when environment variables are present
-  splunk_hec:
-    token: "${SPLUNK_ACCESS_TOKEN}"
-    endpoint: "https://ingest.${SPLUNK_REALM}.signalfx.com/v2/trace"
-    source: "otel-no-tail-sampling-demo"
-    sourcetype: "otel-trace"
 
 extensions:
   health_check:
@@ -44,8 +36,3 @@ service:
       receivers: [otlp]
       processors: [memory_limiter, batch]
       exporters: [otlp, debug]
-    # Conditional Splunk pipeline, activated by switch_collector_config.sh when needed
-    ${SPLUNK_PIPELINE/# traces\/splunk:/traces\/splunk:}
-      ${SPLUNK_PIPELINE/# receivers:/receivers:} [otlp]
-      ${SPLUNK_PIPELINE/# processors:/processors:} [memory_limiter, batch]
-      ${SPLUNK_PIPELINE/# exporters:/exporters:} [splunk_hec, debug]

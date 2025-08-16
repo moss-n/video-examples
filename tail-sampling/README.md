@@ -30,7 +30,11 @@ tail-sampling/
 │   └── requirements.txt     # Python dependencies
 ├── docker-compose.yaml      # Orchestrates all services
 ├── generate_load.sh         # Script to generate test traffic
-├── otel-collector-config.yaml  # OTel Collector config with tail sampling
+├── otel-collector-config-with-sampling.yaml  # OTel Collector config with tail sampling
+├── otel-collector-config-no-sampling.yaml  # OTel Collector config without tail sampling
+├── otel-collector-config-with-sampling-splunk.yaml  # Tail sampling with Splunk export
+├── otel-collector-config-no-sampling-splunk.yaml  # No tail sampling with Splunk export
+├── switch_collector_config.sh  # Script to switch between configurations
 ├── README.md               # This file
 └── splunk_integration.md   # Instructions for Splunk Observability Cloud
 ```
@@ -92,7 +96,26 @@ After generating 200 requests:
 
 ## Splunk Observability Cloud Integration
 
-For instructions on integrating with Splunk Observability Cloud, see [splunk_integration.md](splunk_integration.md).
+This demo supports exporting traces to both Jaeger (default) and Splunk Observability Cloud.
+
+### Using the Switch Script for Splunk Integration
+
+1. Create a `.env` file with your Splunk credentials:
+   ```
+   SPLUNK_ACCESS_TOKEN=your-access-token
+   SPLUNK_REALM=your-realm (e.g., us1)
+   ```
+
+2. To switch to a configuration that exports to Splunk:
+   ```
+   # With tail sampling and Splunk export
+   ./switch_collector_config.sh splunk-tail
+   
+   # Without tail sampling but with Splunk export
+   ./switch_collector_config.sh splunk-no-tail
+   ```
+
+3. For more details on Splunk Observability Cloud integration, see [splunk_integration.md](splunk_integration.md).
 
 ## Video Talking Points
 

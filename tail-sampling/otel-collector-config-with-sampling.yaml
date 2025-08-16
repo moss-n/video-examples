@@ -13,15 +13,9 @@ exporters:
     endpoint: jaeger:4317
     tls:
       insecure: true
-  # Debug exporter for console output (replaced deprecated logging exporter)
+  # Debug exporter for console output
   debug:
     verbosity: detailed
-  # Splunk exporter - enabled when environment variables are present
-  splunk_hec:
-    token: "${SPLUNK_ACCESS_TOKEN}"
-    endpoint: "https://ingest.${SPLUNK_REALM}.signalfx.com/v2/trace"
-    source: "otel-tail-sampling-demo"
-    sourcetype: "otel-trace"
 
 processors:
   batch:
@@ -78,8 +72,3 @@ service:
       receivers: [otlp]
       processors: [batch, tail_sampling]
       exporters: [otlp, debug]
-    # Conditional Splunk pipeline, activated by switch_collector_config.sh when needed
-    ${SPLUNK_PIPELINE/# traces\/splunk:/traces\/splunk:}
-      ${SPLUNK_PIPELINE/# receivers:/receivers:} [otlp]
-      ${SPLUNK_PIPELINE/# processors:/processors:} [batch, tail_sampling]
-      ${SPLUNK_PIPELINE/# exporters:/exporters:} [splunk_hec, debug]
