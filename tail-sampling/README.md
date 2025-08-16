@@ -63,6 +63,7 @@ The demo includes a script to switch between two collector configurations to dem
    ```
    ./switch_collector_config.sh no-tail
    ```
+   This will run the service with the name `no-order-service` in Jaeger UI.
 
 2. Generate load and observe all traces in Jaeger:
    ```
@@ -73,13 +74,14 @@ The demo includes a script to switch between two collector configurations to dem
    ```
    ./switch_collector_config.sh tail
    ```
+   This will run the service with the name `with-order-service` in Jaeger UI.
 
 4. Generate load again and observe how tail sampling affects trace volume:
    ```
    ./generate_load.sh
    ```
 
-5. Compare the number of traces and their characteristics in Jaeger UI
+5. Compare the number of traces and their characteristics in Jaeger UI. You can easily distinguish between the sampling modes by selecting the appropriate service name in the Jaeger UI dropdown.
 
 6. Check current configuration status any time:
    ```
@@ -116,6 +118,44 @@ This demo supports exporting traces to both Jaeger (default) and Splunk Observab
    ```
 
 3. For more details on Splunk Observability Cloud integration, see [splunk_integration.md](splunk_integration.md).
+
+## Troubleshooting
+
+### Service Not Appearing in Jaeger UI
+
+If you're having trouble seeing the services in Jaeger UI:
+
+1. Make sure all containers are running:
+   ```
+   docker compose ps
+   ```
+
+2. Verify that you've generated some load:
+   ```
+   ./generate_load.sh
+   ```
+
+3. If changes to code aren't reflected after switching configs:
+   ```
+   # Full rebuild and restart
+   docker compose down
+   docker compose build --no-cache
+   docker compose up -d
+   ```
+
+4. Check the service name being used:
+   ```
+   docker exec tail-sampling-order-service-1 env | grep OTEL_SERVICE_NAME
+   ```
+
+### Common Issues
+
+- **Old service names still showing in Jaeger**: This is normal - Jaeger keeps historical service data. Look for the correct service name (`with-order-service` or `no-order-service`)
+
+- **Configuration not taking effect**: Ensure the collector is using the right config by checking logs:
+  ```
+  docker compose logs otel-collector | grep tail_sampling
+  ```
 
 ## Video Talking Points
 
