@@ -8,7 +8,7 @@ This demo showcases tail sampling using:
 
 - A Python Flask application (simulated Order Service)
 - OpenTelemetry for instrumentation
-- OpenTelemetry Collector for tail sampling
+- Splunk Distribution of the OpenTelemetry Collector for tail sampling
 - Jaeger for trace visualization (as a stand-in for Splunk Observability Cloud)
 
 ## Tail Sampling Rules
@@ -96,9 +96,16 @@ After generating 200 requests:
 - Approximately 16 "normal" traces (10% of the remaining 80%)
 - Total: ~56 traces in Jaeger instead of 200
 
-## Splunk Observability Cloud Integration
+## Splunk Integration
 
-This demo supports exporting traces to both Jaeger (default) and Splunk Observability Cloud.
+This demo uses the Splunk Distribution of OpenTelemetry Collector (`quay.io/signalfx/splunk-otel-collector`) and supports exporting traces to both Jaeger (default) and Splunk Observability Cloud.
+
+### Key Features of Splunk OpenTelemetry Collector
+
+- Pre-configured with recommended settings for Splunk products
+- Includes all necessary extensions and processors for comprehensive observability
+- Compatible with standard OpenTelemetry APIs and configurations
+- Enhanced security features and optimized performance
 
 ### Using the Switch Script for Splunk Integration
 
@@ -117,7 +124,9 @@ This demo supports exporting traces to both Jaeger (default) and Splunk Observab
    ./switch_collector_config.sh splunk-no-tail
    ```
 
-3. For more details on Splunk Observability Cloud integration, see [splunk_integration.md](splunk_integration.md).
+3. Even without Splunk credentials, you can still use all demo features with Jaeger visualization.
+
+4. For more details on Splunk Observability Cloud integration, see [splunk_integration.md](splunk_integration.md).
 
 ## Troubleshooting
 

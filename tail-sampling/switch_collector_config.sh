@@ -72,9 +72,13 @@ case "$1" in
         export CONFIG_TYPE=with
         SPLUNK_ENABLED="false"
         
+        # Reset to standard config if needed
+        cp -f otel-collector-config-with-sampling.yaml.original otel-collector-config-with-sampling.yaml 2>/dev/null || true
+        
         # Only restart the collector service to preserve Jaeger trace data
         docker compose stop otel-collector order-service
-        docker compose up -d otel-collector order-service
+        # Pass CONFIG_TYPE explicitly to ensure proper service naming
+        CONFIG_TYPE=with docker compose up -d otel-collector order-service
         
         # Set current state
         CURRENT_CONFIG="with"
@@ -86,13 +90,17 @@ case "$1" in
     "no-tail")
         echo -e "${BLUE}Switching to${NC} no tail sampling configuration..."
         
-        # Set collector config file
+        # Set collector config file - use "no" as the service name prefix
         export CONFIG_TYPE=no
         SPLUNK_ENABLED="false"
         
+        # Reset to standard config if needed
+        cp -f otel-collector-config-no-sampling.yaml.original otel-collector-config-no-sampling.yaml 2>/dev/null || true
+        
         # Only restart the collector service to preserve Jaeger trace data
         docker compose stop otel-collector order-service
-        docker compose up -d otel-collector order-service
+        # Pass CONFIG_TYPE explicitly to ensure proper service naming
+        CONFIG_TYPE=no docker compose up -d otel-collector order-service
         
         # Set current state
         CURRENT_CONFIG="no"
@@ -107,6 +115,11 @@ case "$1" in
         # Check Splunk credentials
         check_splunk_env
         
+        # Make backup of original config if it doesn't exist already
+        if [ ! -f otel-collector-config-with-sampling.yaml.original ]; then
+            cp otel-collector-config-with-sampling.yaml otel-collector-config-with-sampling.yaml.original
+        fi
+        
         # Set config file to use Splunk version
         cp otel-collector-config-with-sampling-splunk.yaml otel-collector-config-with-sampling.yaml
         
@@ -116,7 +129,8 @@ case "$1" in
         export SPLUNK_REALM=$SPLUNK_REALM
         
         docker compose stop otel-collector order-service
-        docker compose up -d otel-collector order-service
+        # Pass CONFIG_TYPE explicitly to ensure proper service naming
+        CONFIG_TYPE=with SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN SPLUNK_REALM=$SPLUNK_REALM docker compose up -d otel-collector order-service
         
         # Set current state
         CURRENT_CONFIG="with"
@@ -132,6 +146,11 @@ case "$1" in
         # Check Splunk credentials
         check_splunk_env
         
+        # Make backup of original config if it doesn't exist already
+        if [ ! -f otel-collector-config-no-sampling.yaml.original ]; then
+            cp otel-collector-config-no-sampling.yaml otel-collector-config-no-sampling.yaml.original
+        fi
+        
         # Set config file to use Splunk version
         cp otel-collector-config-no-sampling-splunk.yaml otel-collector-config-no-sampling.yaml
         
@@ -141,7 +160,8 @@ case "$1" in
         export SPLUNK_REALM=$SPLUNK_REALM
         
         docker compose stop otel-collector order-service
-        docker compose up -d otel-collector order-service
+        # Pass CONFIG_TYPE explicitly to ensure proper service naming
+        CONFIG_TYPE=no SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN SPLUNK_REALM=$SPLUNK_REALM docker compose up -d otel-collector order-service
         
         # Set current state
         CURRENT_CONFIG="no"

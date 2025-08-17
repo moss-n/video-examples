@@ -13,11 +13,11 @@ services:
     networks:
       - trace-demo
 
-  # OpenTelemetry Collector with configurable sampling
+  # Splunk OpenTelemetry Collector with configurable sampling
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: quay.io/signalfx/splunk-otel-collector:latest
     volumes:
-      - ./otel-collector-config-${CONFIG_TYPE:-no}-sampling.yaml:/etc/otelcol-contrib/config.yaml
+      - ./otel-collector-config-${CONFIG_TYPE:-no}-sampling.yaml:/etc/otel/config.yaml
     ports:
       - "8888:8888"     # Prometheus metrics
       - "8889:8889"     # Prometheus exporter
@@ -26,6 +26,8 @@ services:
       - "55679:55679"   # zpages extension
       - "24317:4317"    # OTLP gRPC receiver (remapped to avoid conflicts)
       - "24318:4318"    # OTLP HTTP receiver (remapped to avoid conflicts)
+    command:
+      - "--config=/etc/otel/config.yaml"
     depends_on:
       - jaeger
     networks:
