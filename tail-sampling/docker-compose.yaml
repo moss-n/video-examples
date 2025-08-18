@@ -21,6 +21,7 @@ services:
     environment:
       - SPLUNK_ACCESS_TOKEN=${SPLUNK_ACCESS_TOKEN:-}
       - SPLUNK_REALM=${SPLUNK_REALM:-}
+      - ENVIRONMENT=${ENVIRONMENT:-tail-sampling-demo}
     ports:
       - "8888:8888"     # Prometheus metrics
       - "8889:8889"     # Prometheus exporter
@@ -48,7 +49,7 @@ services:
       # Explicitly set protocol to grpc since we're using http://
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_SERVICE_NAME=${CONFIG_TYPE:-default}-order-service
-      - OTEL_RESOURCE_ATTRIBUTES=service.name=${CONFIG_TYPE:-default}-order-service,service.version=1.0.0,deployment.environment=demo
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=${CONFIG_TYPE:-default}-order-service,service.version=1.0.0,deployment.environment=${ENVIRONMENT:-tail-sampling-demo},environment=${ENVIRONMENT:-tail-sampling-demo}
       # The CONFIG_TYPE will be set in the script when switching configurations
       - CONFIG_TYPE=${CONFIG_TYPE:-default}
       # Send 100% of traces to the collector for tail sampling (crucial!)

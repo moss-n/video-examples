@@ -77,8 +77,8 @@ case "$1" in
         
         # Only restart the collector service to preserve Jaeger trace data
         docker compose stop otel-collector order-service
-        # Pass CONFIG_TYPE explicitly to ensure proper service naming
-        CONFIG_TYPE=with docker compose up -d otel-collector order-service
+        # Pass CONFIG_TYPE and ENVIRONMENT variables explicitly to ensure proper service naming and APM filtering
+        ENVIRONMENT=${ENVIRONMENT:-tail-sampling-demo} CONFIG_TYPE=with docker compose up -d otel-collector order-service
         
         # Set current state
         CURRENT_CONFIG="with"
@@ -99,8 +99,8 @@ case "$1" in
         
         # Only restart the collector service to preserve Jaeger trace data
         docker compose stop otel-collector order-service
-        # Pass CONFIG_TYPE explicitly to ensure proper service naming
-        CONFIG_TYPE=no docker compose up -d otel-collector order-service
+        # Pass CONFIG_TYPE and ENVIRONMENT variables explicitly to ensure proper service naming and APM filtering
+        ENVIRONMENT=${ENVIRONMENT:-tail-sampling-demo} CONFIG_TYPE=no docker compose up -d otel-collector order-service
         
         # Set current state
         CURRENT_CONFIG="no"
@@ -129,8 +129,8 @@ case "$1" in
         export SPLUNK_REALM=$SPLUNK_REALM
         
         docker compose stop otel-collector order-service
-        # Pass CONFIG_TYPE explicitly to ensure proper service naming
-        CONFIG_TYPE=with SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN SPLUNK_REALM=$SPLUNK_REALM docker compose up -d otel-collector order-service
+        # Pass CONFIG_TYPE and ENVIRONMENT variables explicitly to ensure proper service naming and APM filtering
+        ENVIRONMENT=${ENVIRONMENT:-tail-sampling-demo} CONFIG_TYPE=with SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN SPLUNK_REALM=$SPLUNK_REALM docker compose up -d otel-collector order-service
         
         # Set current state
         CURRENT_CONFIG="with"
@@ -160,8 +160,8 @@ case "$1" in
         export SPLUNK_REALM=$SPLUNK_REALM
         
         docker compose stop otel-collector order-service
-        # Pass CONFIG_TYPE explicitly to ensure proper service naming
-        CONFIG_TYPE=no SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN SPLUNK_REALM=$SPLUNK_REALM docker compose up -d otel-collector order-service
+        # Pass CONFIG_TYPE and ENVIRONMENT variables explicitly to ensure proper service naming and APM filtering
+        ENVIRONMENT=${ENVIRONMENT:-tail-sampling-demo} CONFIG_TYPE=no SPLUNK_ACCESS_TOKEN=$SPLUNK_ACCESS_TOKEN SPLUNK_REALM=$SPLUNK_REALM docker compose up -d otel-collector order-service
         
         # Set current state
         CURRENT_CONFIG="no"
