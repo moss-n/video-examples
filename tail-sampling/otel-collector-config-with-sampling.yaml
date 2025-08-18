@@ -16,6 +16,14 @@ exporters:
   # Debug exporter for console output
   debug:
     verbosity: detailed
+  # Splunk exporter for traces using OTLP HTTP (replacement for deprecated SAPM)
+  otlphttp/splunk:
+    traces_endpoint: "https://ingest.${SPLUNK_REALM}.signalfx.com/v2/trace/otlp"
+    headers:
+      X-SF-TOKEN: "${SPLUNK_ACCESS_TOKEN}"
+    sending_queue:
+      enabled: true
+      num_consumers: 4
 
 processors:
   batch:
@@ -72,3 +80,7 @@ service:
       receivers: [otlp]
       processors: [batch, tail_sampling]
       exporters: [otlp, debug]
+    traces/splunk:
+      receivers: [otlp]
+      processors: [batch, tail_sampling]
+      exporters: [otlphttp/splunk, debug]

@@ -22,10 +22,13 @@ logger = logging.getLogger(__name__)
 config_type = os.environ.get("CONFIG_TYPE", "unknown")
 service_name = f"order-service-{config_type}"
 
+# Get environment name from environment variables
+environment_name = os.environ.get("ENVIRONMENT", "tail-sampling-demo")
+
 resource = Resource.create({
     "service.name": os.environ.get("OTEL_SERVICE_NAME", service_name),
     "service.version": "1.0.0",
-    "deployment.environment": "demo"
+    "deployment.environment": environment_name
 })
 
 # Set up the tracer

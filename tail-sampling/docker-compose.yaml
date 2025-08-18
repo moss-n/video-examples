@@ -52,6 +52,8 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES=service.name=${CONFIG_TYPE:-default}-order-service,service.version=1.0.0,deployment.environment=${ENVIRONMENT:-tail-sampling-demo}
       # The CONFIG_TYPE will be set in the script when switching configurations
       - CONFIG_TYPE=${CONFIG_TYPE:-default}
+      # Pass the environment name explicitly for the app.py environment variable
+      - ENVIRONMENT=${ENVIRONMENT:-tail-sampling-demo}
       # Send 100% of traces to the collector for tail sampling (crucial!)
       - OTEL_TRACES_SAMPLER=always_on
       - OTEL_TRACES_SAMPLER_ARG=1.0
